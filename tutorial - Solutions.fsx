@@ -31,6 +31,7 @@ v.Options
 #r "FSharp.Compiler.Service.dll"
 
 open System
+open System.IO
 open System.Collections.Generic
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
@@ -38,12 +39,6 @@ let checker = InteractiveChecker.Create()
 
 let getProjectOptions projFile = 
     let opts = ProjectParser.ProjectResolver(projFile).Options
-    let opts = 
-           [| for opt in opts do yield opt.Replace("mono/2.0","mono/4.0")
-              //if not (opts |> Array.exists (fun opt -> opt.Contains("FSharp.Core"))) then 
-              //    yield "-r:/Library/Frameworks/Mono.framework/Versions/3.8.0/lib/mono/4.0/FSharp.Core.dll" 
-            |]
-
     checker.GetProjectOptionsFromCommandLineArgs(projFile, opts)
 
  

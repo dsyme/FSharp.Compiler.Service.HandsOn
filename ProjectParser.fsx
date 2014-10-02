@@ -83,7 +83,8 @@ type ProjectResolver(uri: string) =
              Some (mkAbsolute p.Directory v)
 
       let docfile = if String.IsNullOrWhiteSpace docfile then None else Some (mkAbsolute p.Directory docfile)
-      [|
+      let opts = 
+       [|
         yield "--simpleresolution"
         yield "--noframework"
         match outfile with 
@@ -109,3 +110,16 @@ type ProjectResolver(uri: string) =
         yield! p.References
         yield! p.Files
        |]
+
+    // Workarounds for various reference resolution glitches on different installations, reassons TBD
+      let opts = 
+           [| for opt in opts do 
+                 yield opt.Replace("mono/2.0","mono/4.0")
+              if not (opts |> Array.exists (fun opt -> opt.Contains("FSharp.Core"))) then 
+                if (try File.Exists "/Library/Frameworks/Mono.framework/Versions/3.8.0/lib/mono/4.0/FSharp.Core.dll" with _ -> false) then
+                    yield "/Library/Frameworks/Mono.framework/Versions/3.8.0/lib/mono/4.0/FSharp.Core.dll"
+                if (try File.Exists @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\3.0\Runtime\v4.0\FSharp.Core.dll" with _ -> false) then
+                    yield @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\3.0\Runtime\v4.0\FSharp.Core.dll"
+            |]
+      opts
+
