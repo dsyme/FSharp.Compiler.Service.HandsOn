@@ -50,35 +50,19 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Content Include="packages.config" />
-    <Content Include="app.config" />
     <None Include="ProjectParser.fsx" />
     <None Include="compiler.fsx" />
     <None Include="editor.fsx" />
-    <None Include="filesystem.fsx" />
-    <None Include="interactive.fsx" />
-    <None Include="project.fsx" />
-    <None Include="symbols.fsx" />
+    <None Include="tutorial.fsx" />
     <None Include="tokenizer.fsx" />
     <None Include="untypedtree.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="FSharp.Charting.Gtk">
-      <HintPath>packages\FSharp.Charting.Gtk.0.90.7\lib\net40\FSharp.Charting.Gtk.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="FSharp.Compiler.Service">
       <HintPath>packages\FSharp.Compiler.Service.0.0.62\lib\net45\FSharp.Compiler.Service.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
-    <Reference Include="OxyPlot">
-      <HintPath>packages\FSharp.Charting.Gtk.0.90.7\lib\net40\OxyPlot.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="OxyPlot.GtkSharp">
-      <HintPath>packages\FSharp.Charting.Gtk.0.90.7\lib\net40\OxyPlot.GtkSharp.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
