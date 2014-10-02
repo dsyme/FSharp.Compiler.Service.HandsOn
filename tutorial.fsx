@@ -151,7 +151,11 @@ type Evaluator() =
 let evaluator = Evaluator()
 let pow0 =
     evaluator.EvalExpression
-        """(();   let rec pow n x = if n = 0 then 1.0 else x * pow (n-1) x in pow)"""
+        """
+let rec pow n x = if n = 0 then 1.0 else x * pow (n-1) x 
+pow        
+        """
+
       :?> (int -> double -> double)
 
 pow0 10 2.0
@@ -159,12 +163,12 @@ pow0 10 2.0
 let pow1 =
     evaluator.EvalExpression
         """
-(();   
  __DO_AN_IMPLEMENTATION_OF_POW_USING_A_MUTABLE__
  let rec pow n x = 
       let mutable v = 1.0 
       ...
- pow)"""
+ pow
+"""
       :?> (int -> double -> double)
 
 
@@ -172,11 +176,13 @@ let pow1 =
 let pow2 n =
     evaluator.EvalExpression
        ("""
-(();   
+ 
  __DO_AN_IMPLEMENTATION_OF_POW_USING_GENERATED_CODE__
  let rec pow (x:double) = 
       __MAKE_THIS_BE x * .... * x 
- pow)""")
+ pow
+ 
+ """)
       :?> (double -> double)
 
 

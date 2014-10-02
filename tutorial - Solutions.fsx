@@ -153,7 +153,10 @@ type Evaluator() =
 let evaluator = Evaluator()
 let pow0 =
     evaluator.EvalExpression
-        """(();   let rec pow n x = if n = 0 then 1.0 else x * pow (n-1) x in pow)"""
+        """
+let rec pow n x = if n = 0 then 1.0 else x * pow (n-1) x 
+pow        
+        """
       :?> (int -> double -> double)
 
 pow0 10 2.0
@@ -161,9 +164,13 @@ pow0 10 2.0
 let pow1 =
     evaluator.EvalExpression
         """
-(();   
- let rec pow n x = let mutable v = 1.0 in for i in 1 .. n do v <- v * x done; v
- pow)"""
+ let rec pow n x = 
+     let mutable v = 1.0 
+     for i in 1 .. n do 
+         v <- v * x 
+     v
+ pow
+ """
       :?> (int -> double -> double)
 
 
@@ -171,9 +178,10 @@ let pow1 =
 let pow2 n =
     evaluator.EvalExpression
        ("""
-(();   
  let rec pow (x:double) = """ + String.concat " * " (List.replicate n "x") + """
- pow)""")
+ pow
+ 
+ """)
       :?> (double -> double)
 
 
