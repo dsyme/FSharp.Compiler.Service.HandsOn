@@ -35,8 +35,10 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 
 let checker = __CREATE_AN_INTERACTIVE_CHECKER__ 
 
+
 // Helper to get the project options in a form that the InteractiveChecker expects
 let getProjectOptions projFile = 
+
     let opts = ProjectParser.ProjectResolver(projFile).Options
     let opts = 
            [| for opt in opts do yield opt.Replace("mono/2.0","mono/4.0")
@@ -46,7 +48,11 @@ let getProjectOptions projFile =
 
     checker.GetProjectOptionsFromCommandLineArgs(projFile, opts)
 
+
+ 
 let projectOptions = getProjectOptions fsproj
+
+// OR: let projectOptions = checker.GetProjectOptionsFromScript("script.fsx", System.IO.File.ReadAllText("script.fsx")
 
 let wholeProjectResults = 
     __USE_THE_CHECKER_TO_PARSE_AND_CHECK_USING_THE_GIVEN_PROJECT_OPTIONS__

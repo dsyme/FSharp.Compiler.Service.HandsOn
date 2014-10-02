@@ -46,7 +46,11 @@ let getProjectOptions projFile =
 
     checker.GetProjectOptionsFromCommandLineArgs(projFile, opts)
 
+ 
 let projectOptions = getProjectOptions fsproj
+
+// OR: let projectOptions = checker.GetProjectOptionsFromScript("script.fsx", System.IO.File.ReadAllText("script.fsx")
+
 projectOptions.ProjectOptions
 let wholeProjectResults = 
     checker.ParseAndCheckProject(projectOptions) 
