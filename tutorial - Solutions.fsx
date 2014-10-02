@@ -15,11 +15,12 @@ This tutorial demonstrates symbols, projects, interactive compilation/execution 
 //---------------------------------------------------------------------------
 // Task 1. Crack an F# project file and get its options
 
-let fsproj = @"C:\GitHub\fsharp\fsharpbinding\FSharp.AutoComplete\FSharp.AutoComplete.fsproj"
+let fsproj = __SOURCE_DIRECTORY__ + @"\example\example.fsproj"
 
 let v = ProjectParser.ProjectResolver(fsproj) 
 
 v.Options
+
 
 
 //---------------------------------------------------------------------------
