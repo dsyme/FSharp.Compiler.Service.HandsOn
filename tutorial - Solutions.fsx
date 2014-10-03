@@ -151,17 +151,19 @@ type Evaluator() =
       | None -> failwith "Got no result!"
 
 let evaluator = Evaluator()
-let pow0 =
+let pow0obj =
     evaluator.EvalExpression
         """
 let rec pow n x = if n = 0 then 1.0 else x * pow (n-1) x 
 pow        
         """
-      :?> (int -> double -> double)
+
+// EvalExpression returns an 'obj'. Convert the object to the expected type
+let pow0 = pow0obj |> unbox<int -> double -> double>
 
 pow0 10 2.0
 
-let pow1 =
+let pow1obj =
     evaluator.EvalExpression
         """
  let rec pow n x = 
@@ -171,8 +173,8 @@ let pow1 =
      v
  pow
  """
-      :?> (int -> double -> double)
 
+let pow1 = pow1obj |> unbox<int -> double -> double>
 
 
 let pow2 n =
@@ -182,7 +184,8 @@ let pow2 n =
  pow
  
  """)
-      :?> (double -> double)
+
+     |> unbox<double -> double>
 
 
 pow2 10 10.0
@@ -201,6 +204,7 @@ let powt f =
 powt (pow0 10)
 powt (pow1 10)
 powt pow2_10
+powt (pow0 100)
 powt (pow1 100)
 powt pow2_100
 
@@ -223,22 +227,29 @@ type MyFileSystem() =
     member __.SetFile(file, text:string) = files.[file] <- (DateTime.Now, text)
 
     interface IFileSystem with
-        // Implement the service to open files for reading and writing
         member __.FileStreamReadShim(fileName) = 
-            match files.TryGetValue(fileName) with
-            | true, (dt,text) -> new MemoryStream(Encoding.UTF8.GetBytes(text)) :> Stream
-            | _ -> dflt.FileStreamReadShim(fileName)
+            if files.ContainsKey(fileName) then
+                let (fileWriteTime, fileText) = files.[fileName]
+                new MemoryStream(Encoding.UTF8.GetBytes(fileText)) :> Stream
+            else 
+                dflt.FileStreamReadShim(fileName)
 
         member __.ReadAllBytesShim(fileName) = 
-            match files.TryGetValue(fileName) with
-            | true, (dt,text) -> Encoding.UTF8.GetBytes(text)
-            | _ -> dflt.ReadAllBytesShim(fileName)
+            if files.ContainsKey(fileName) then
+                let (fileWriteTime, fileText) = files.[fileName]
+                Encoding.UTF8.GetBytes(fileText)
+            else 
+                dflt.ReadAllBytesShim(fileName)
 
-        member __.SafeExists(fileName) = files.ContainsKey(fileName) || dflt.SafeExists(fileName)
         member __.GetLastWriteTimeShim(fileName) = 
-            match files.TryGetValue(fileName) with
-            | true, (dt, text) -> dt
-            | _ -> dflt.GetLastWriteTimeShim(fileName)
+            if files.ContainsKey(fileName) then
+                let (fileWriteTime, fileText) = files.[fileName]
+                fileWriteTime
+            else 
+                dflt.GetLastWriteTimeShim(fileName)
+
+        member __.SafeExists(fileName) = 
+            files.ContainsKey(fileName) || dflt.SafeExists(fileName)
 
         member __.FileStreamCreateShim(fileName) = dflt.FileStreamCreateShim(fileName)
         member __.FileStreamWriteExistingShim(fileName) = dflt.FileStreamWriteExistingShim(fileName)

@@ -149,61 +149,67 @@ type Evaluator() =
       | None -> failwith "Got no result!"
 
 let evaluator = Evaluator()
-let pow0 =
+let pow0obj =
     evaluator.EvalExpression
         """
 let rec pow n x = if n = 0 then 1.0 else x * pow (n-1) x 
 pow        
         """
 
-      :?> (int -> double -> double)
+// EvalExpression returns an 'obj'. Convert the object to the expected type
+let pow0 = pow0obj |> unbox<int -> double -> double>
 
-pow0 10 2.0
+__TEST_POW0___
 
-let pow1 =
+let pow1obj =
     evaluator.EvalExpression
         """
- __DO_AN_IMPLEMENTATION_OF_POW_USING_A_MUTABLE__
- let rec pow n x = 
-      let mutable v = 1.0 
-      ...
- pow
-"""
-      :?> (int -> double -> double)
+let rec pow n x = 
+    let mutable v = 1.0 
+__DO_AN_IMPLEMENTATION_OF_POW_USING_A_MUTABLE__
 
+pow
+"""
+
+let pow1 = pow1obj |> unbox<int -> double -> double>
+
+__TEST_POW1___
 
 
 let pow2 n =
     evaluator.EvalExpression
        ("""
- 
  __DO_AN_IMPLEMENTATION_OF_POW_USING_GENERATED_CODE__
  let rec pow (x:double) = 
       __MAKE_THIS_BE x * .... * x 
  pow
  
  """)
-      :?> (double -> double)
+
+     |> unbox<double -> double>
 
 
-pow2 10 10.0
+__TEST_POW2___
 
 #time "on"
 
-let pow2_10 = pow2 10 
-let pow2_100 = pow2 100 
 
+// Generate a specialized 'pow2' for size 10 and 100
+let pow2_10 = pow2 10 
+
+__GENERATE_SPECIALIZED_POW2_FOR_SIZE_100_AND_CALL_IT_'pow2_100'__
+
+// A benchmarking function that uses 'f' many times
 let powt f = 
     let mutable res = 0.0
     for i in 0 .. 10000000 do 
         res <- f 10.0 
     res
 
-powt (pow0 10)
-powt (pow1 10)
-powt pow2_10
-powt (pow1 100)
-powt pow2_100
+__BENCHMARK_POW0_POW1_POW2_USING_POWT___
+
+//powt (pow1 100)
+//powt pow2_100
 
 
 //---------------------------------------------------------------------------
@@ -218,28 +224,39 @@ open System.Text
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 
 type MyFileSystem() = 
+    /// The default file system
     let dflt = Shim.FileSystem
     
-    let files = Dictionary<_,_>()
-    member __.SetFile(file, text:string) = files.[file] <- (DateTime.Now, text)
+    /// The store of files in the virtualized file system
+    let files = Dictionary<string,(DateTime * string)>()
+
+    /// Sets the file text in the file system
+    member __.SetFile(file, text:string) = 
+         files.[file] <- (DateTime.Now, text)
 
     interface IFileSystem with
         // Implement the service to open files for reading and writing
         member __.FileStreamReadShim(fileName) = 
-            match files.TryGetValue(fileName) with
-            | true, (dt,text) -> new MemoryStream(Encoding.UTF8.GetBytes(text)) :> Stream
-            | _ -> dflt.FileStreamReadShim(fileName)
+            if files.ContainsKey(fileName) then
+                let (fileWriteTime, fileText) = files.[fileName]
+                new MemoryStream(Encoding.UTF8.GetBytes(fileText)) :> Stream
+            else 
+                dflt.FileStreamReadShim(fileName)
 
         member __.ReadAllBytesShim(fileName) = 
-            match files.TryGetValue(fileName) with
-            | true, (dt,text) -> Encoding.UTF8.GetBytes(text)
-            | _ -> dflt.ReadAllBytesShim(fileName)
+            __IMPLEMENT_THIS_PART_OF_THE_FILE_SYSTEM_API_USING_'Encoding.UTF8.GetBytes(fileText)'__
+            __CHECK_'files.ContainsKey'__FIRST__LIKE_THE_OTHER_CASES__
+            __USE_'dftl.ReadAllBytesShim(fileName)'_LIKE_THE_OTHER_CASES__
 
-        member __.SafeExists(fileName) = files.ContainsKey(fileName) || dflt.SafeExists(fileName)
         member __.GetLastWriteTimeShim(fileName) = 
-            match files.TryGetValue(fileName) with
-            | true, (dt, text) -> dt
-            | _ -> dflt.GetLastWriteTimeShim(fileName)
+            if files.ContainsKey(fileName) then
+                let (fileWriteTime, fileText) = files.[fileName]
+                fileWriteTime
+            else 
+                dflt.GetLastWriteTimeShim(fileName)
+
+        member __.SafeExists(fileName) = 
+            files.ContainsKey(fileName) || dflt.SafeExists(fileName)
 
         member __.FileStreamCreateShim(fileName) = dflt.FileStreamCreateShim(fileName)
         member __.FileStreamWriteExistingShim(fileName) = dflt.FileStreamWriteExistingShim(fileName)
@@ -267,16 +284,18 @@ FileSystem.ReadAllBytesShim fileName2
 //---------------------------------------------------------------------------
 // Task 6b. Check with respect to the file system
 
+// Create a new set of project options with a different set of file names
 let projectOptions2 = 
     { projectOptions with 
         ProjectOptions = [| yield! projectOptions.ProjectOptions |> Array.filter(fun s -> not (s.EndsWith ".fs"))
-                            yield fileName1;
+                            yield fileName1
                             yield fileName2 |] }
 
 let wholeProjectResults2 = 
     checker.ParseAndCheckProject(projectOptions2) 
     |> Async.RunSynchronously
 
+// Check if the project results contains errors
 wholeProjectResults2.Errors
 
 //---------------------------------------------------------------------------
@@ -284,11 +303,12 @@ wholeProjectResults2.Errors
 
 open System.Windows.Forms
 
+// Create two editor windows
 for fileName in [fileName1; fileName2] do 
-  let tb1 = new TextBox(Dock=DockStyle.Fill, Multiline=true)
-  let f1 = new Form(Visible=true, Text=fileName)
-  f1.Controls.Add(tb1)
-  tb1.TextChanged.Add(fun _ -> printfn "setting..."; myFileSystem.SetFile(fileName, tb1.Text))
+  let textBox1 = new TextBox(Dock=DockStyle.Fill, Multiline=true)
+  let f1 = new Form(Visible=true, Text=fileNam l
+  f1.Controls.Add(textBox1)
+  textBox1.TextChanged.Add(fun _ -> printfn "setting..."; myFileSystem.SetFile(fileName, textBox1.Text))
 
 
 async { for i in 0 .. 100 do 
@@ -296,7 +316,11 @@ async { for i in 0 .. 100 do
             do! Async.Sleep 1000
             printfn "checking..."
             let! wholeProjectResults = checker.ParseAndCheckProject(projectOptions2) 
+
             printfn "checked..."
+
+            __ADD_AN_ANALYSIS_WHICH_REPORTS_THE_USE_OF_MUTABLE_VALUES_IN_THE_PROJECT_AND_PRINTS_THE_RESULTS__
+
             for e in wholeProjectResults.Errors do 
                printfn "error: %s" e.Message 
           with e -> 

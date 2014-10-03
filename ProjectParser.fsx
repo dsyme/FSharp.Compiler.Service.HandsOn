@@ -1,6 +1,7 @@
 ﻿// --------------------------------------------------------------------------------------
-// (c) Robin Neatherway
+// Sample code
 // --------------------------------------------------------------------------------------
+
 #if INTERACTIVE
 #r "Microsoft.Build"
 #r "Microsoft.Build.Engine"
@@ -21,8 +22,15 @@ open Microsoft.Build.Tasks
 open Microsoft.Build.Utilities
 
 type ProjectResolver(uri: string) = 
-    let project = new Project()
+    let runningOnMono = Type.GetType("Mono.Runtime") <> null
+    let project = 
+        //if runningOnMono then 
+            new Project(Engine.GlobalEngine,"4.0")
+        //else 
+          //  new Project()
+ 
     do project.Load(uri)
+   // do printfn "tv: %A" project.ToolsVersion
     let loadtime = DateTime.Now
     let mkAbsolute dir v = if Path.IsPathRooted v then v else Path.Combine(dir,v) 
 
@@ -112,6 +120,7 @@ type ProjectResolver(uri: string) =
        |]
 
     // Workarounds for various reference resolution glitches on different installations, reassons TBD
+(*
       let opts = 
            [| for opt in opts do 
                  yield opt.Replace("mono/2.0","mono/4.0")
@@ -121,5 +130,14 @@ type ProjectResolver(uri: string) =
                 if (try File.Exists @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\3.0\Runtime\v4.0\FSharp.Core.dll" with _ -> false) then
                     yield @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\3.0\Runtime\v4.0\FSharp.Core.dll"
             |]
+*)
       opts
+
+(*
+let fsproj = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
+
+let v = ProjectResolver(fsproj) 
+
+for x in v.Options do printfn "%s" x
+*)
 
