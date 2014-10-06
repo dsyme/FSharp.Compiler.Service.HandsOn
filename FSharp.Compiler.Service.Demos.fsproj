@@ -1,11 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>906af4b9-e040-44fc-a314-60ff23d2bcc5</ProjectGuid>
+    <ProjectGuid>{906AF4B9-E040-44FC-A314-60FF23D2BCC5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>FSharp.Compiler.Service.Demos</RootNamespace>
     <AssemblyName>FSharp.Compiler.Service.Demos</AssemblyName>
@@ -50,17 +49,16 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Content Include="packages.config" />
-    <None Include="ProjectParser.fsx" />
     <None Include="compiler.fsx" />
     <None Include="editor.fsx" />
     <None Include="tutorial.fsx" />
     <None Include="tokenizer.fsx" />
     <None Include="untypedtree.fsx" />
+    <None Include="ProjectParser.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Compiler.Service">
       <HintPath>packages\FSharp.Compiler.Service.0.0.62\lib\net45\FSharp.Compiler.Service.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
