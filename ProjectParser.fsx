@@ -19,20 +19,23 @@ type ProjectResolver(uri: string) =
     let options = 
 
 //      use engine = new Microsoft.Build.Evaluation.ProjectCollection()
-      let project = 
 
-            let xmlReader = System.Xml.XmlReader.Create (uri)
-            let project = Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection .LoadProject(xmlReader,"4.0")
-            project.FullPath <- uri
-            //project.SetProperty ("Configuration", "Debug");
-            //project.SetProperty ("Platform", "");
+      let xmlReader = System.Xml.XmlReader.Create (uri)
+      let project = Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection.LoadProject(xmlReader,"4.0")
+      project.FullPath <- uri
+      //project.SetProperty ("Configuration", "Debug");
+      //project.SetProperty ("Platform", "");
 
-            Environment.CurrentDirectory <- Path.GetDirectoryName (uri);
-            project //let pi = project.CreateProjectInstance()
+      let project = project.CreateProjectInstance()
+      Environment.CurrentDirectory <- Path.GetDirectoryName (uri);
 
-            //let b = pi.Build ([| "Build" |], [| |])
-            //pi
+      for t in project.Targets do 
+             printfn "target %A --> %A" t.Key t.Value
  
+      let b = project.Build( [| "ResolveReferences" |], null )
+      printfn "build = %A" b
+      let b = project.Build( [| "ResolveAssemblyReferences" |], null )
+      printfn "build = %A" b
       let loadtime = DateTime.Now
       let mkAbsolute dir v = if Path.IsPathRooted v then v else Path.Combine(dir,v) 
       let fileItems  = project.GetItems("Compile")
@@ -66,8 +69,10 @@ type ProjectResolver(uri: string) =
              let v = Path.Combine(outpath,aname) + (if isLib then ".dll" else ".exe")
              Some (mkAbsolute dir v)
 
+      for t in project.Items do 
+             printfn "item %A" (t.EvaluatedInclude)
+ 
       let docfile = if String.IsNullOrWhiteSpace docfile then None else Some (mkAbsolute dir docfile)
-      let b = project.Build( [| "ResolveReferences" |], null )
       let files = [| for f in fileItems do yield mkAbsolute dir f.EvaluatedInclude |]
       let fxVer = project.GetPropertyValue("TargetFrameworkVersion") 
 
@@ -114,12 +119,12 @@ let main(args) =
 
     for x in v.Options do printfn "%s" x
 
-    //let b = Microsoft.Build.Execution.BuildManager()
-    //let nm = typeof<Microsoft.Build.Execution.BuildManager>.InvokeMember("BuildNodeManager", System.Reflection.BindingFlags.NonPublic  ||| System.Reflection.BindingFlags.GetProperty ||| System.Reflection.BindingFlags.Instance, null, b, [| |])
+    // Finalization of the default BuildManager on Mono causes a thread to start when 'BuildNodeManager' is accessed
+    // n the finalizer.  The thread start doesn't work when exiting, and even worse he thread is not marked as a 
+    // background computation thread, so a console application doesn't exit correctly.
+    System.GC.SuppressFinalize(Microsoft.Build.Execution.BuildManager.DefaultBuildManager)
 
-//    let nm = b
-    //b.Finalize()
-    //printfn "done"
+ //   printfn "done"
 
     System.GC.Collect()
     try 
