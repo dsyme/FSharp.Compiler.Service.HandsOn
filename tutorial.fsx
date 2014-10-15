@@ -1,6 +1,4 @@
 
-//#load "packages/FSharp.Charting.Gtk.0.90.7/FSharp.Charting.Gtk.fsx"
-
 
 (*
 Compiler Services: Hands-On Tutorial
@@ -10,10 +8,18 @@ This tutorial demonstrates symbols, projects, interactive compilation/execution 
 
 *)
 
-#load "ProjectParser.fsx"
-
 //---------------------------------------------------------------------------
 // Task 1. Crack an F# project file and get its options
+
+
+#I "packages/FSharp.Compiler.Service.0.0.65/lib/net45/"
+#r "FSharp.Compiler.Service.dll"
+
+open System
+open System.Collections.Generic
+open Microsoft.FSharp.Compiler.SourceCodeServices
+
+let checker = __CREATE_AN_INTERACTIVE_CHECKER__ 
 
 let fsproj = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
 
@@ -25,15 +31,6 @@ v.Options
 //---------------------------------------------------------------------------
 // Task 2. Parse and check an entire project
 
-
-#I "packages/FSharp.Compiler.Service.0.0.62/lib/net45/"
-#r "FSharp.Compiler.Service.dll"
-
-open System
-open System.Collections.Generic
-open Microsoft.FSharp.Compiler.SourceCodeServices
-
-let checker = __CREATE_AN_INTERACTIVE_CHECKER__ 
 
 
 // Helper to get the project options in a form that the InteractiveChecker expects

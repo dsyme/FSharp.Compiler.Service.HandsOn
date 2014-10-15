@@ -1,6 +1,4 @@
 
-//#load "packages/FSharp.Charting.Gtk.0.90.7/FSharp.Charting.Gtk.fsx"
-
 
 (*
 Compiler Services: Project Analysis
@@ -10,24 +8,11 @@ This tutorial demonstrates symbols, projects, interactive compilation/execution 
 
 *)
 
-#load "ProjectParser.fsx"
-
 //---------------------------------------------------------------------------
 // Task 1. Crack an F# project file and get its options
 
-let fsproj = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
 
-let v = ProjectParser.ProjectResolver(fsproj) 
-
-v.Options
-
-
-
-//---------------------------------------------------------------------------
-// Task 2. Parse and check an entire project
-
-
-#I "packages/FSharp.Compiler.Service.0.0.62/lib/net45/"
+#I "packages/FSharp.Compiler.Service.0.0.65/lib/net45/"
 #r "FSharp.Compiler.Service.dll"
 
 open System
@@ -37,20 +22,31 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 
 let checker = InteractiveChecker.Create()
 
-let getProjectOptions projFile = 
-    let opts = ProjectParser.ProjectResolver(projFile).Options
-    checker.GetProjectOptionsFromCommandLineArgs(projFile, opts)
+let fsproj = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
+
+let v = checker.GetProjectOptionsFromProjectFile(fsproj) 
+
+v.ProjectOptions
+
+
+
+//---------------------------------------------------------------------------
+// Task 2. Parse and check an entire project
+
+
+
+let getProjectOptions projFile = checker.GetProjectOptionsFromProjectFile(projFile) 
 
  
 let projectOptions = getProjectOptions fsproj
 
 // OR: let projectOptions = checker.GetProjectOptionsFromScript("script.fsx", System.IO.File.ReadAllText("script.fsx")
 
-projectOptions.ProjectOptions
 let wholeProjectResults = 
     checker.ParseAndCheckProject(projectOptions) 
     |> Async.RunSynchronously
 
+wholeProjectResults.Errors // check this is empty!
 
 //---------------------------------------------------------------------------
 // Task 3. Analyze all uses of all the symbols used in the project to collect some project statistics
