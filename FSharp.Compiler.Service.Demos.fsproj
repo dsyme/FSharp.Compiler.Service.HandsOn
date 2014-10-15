@@ -53,7 +53,6 @@
     <None Include="tutorial.fsx" />
     <None Include="tokenizer.fsx" />
     <None Include="untypedtree.fsx" />
-    <None Include="ProjectParser.fsx" />
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
