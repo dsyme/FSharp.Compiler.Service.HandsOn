@@ -279,6 +279,8 @@ wholeProjectResults2.Errors
 //---------------------------------------------------------------------------
 // Task 7. Create an IDE
 
+#if MONO // this bit is unlikely to work on Mono because of missing System.Windows.Forms support
+#else
 open System.Windows.Forms
 
 for fileName in [fileName1; fileName2] do 
@@ -302,3 +304,4 @@ async { for i in 0 .. 100 do
 
 // Async.CancelDefaultToken()
 
+#endif
