@@ -1,7 +1,7 @@
 
 
 (*
-Compiler Services: Hands-On Tutorial
+Compiler Services: Project Analysis
 ==================================
 
 This tutorial demonstrates symbols, projects, interactive compilation/execution and the file system API
@@ -12,49 +12,36 @@ This tutorial demonstrates symbols, projects, interactive compilation/execution 
 // Task 1. Crack an F# project file and get its options
 
 
-#I "packages/FSharp.Compiler.Service.0.0.65/lib/net45/"
+#I "packages/FSharp.Compiler.Service.0.0.70/lib/net45/"
 #r "FSharp.Compiler.Service.dll"
 
 open System
+open System.IO
 open System.Collections.Generic
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-let checker = __CREATE_AN_INTERACTIVE_CHECKER__ 
+let checker = FSharpChecker.Create()
 
 let fsproj = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
 
-let v = ProjectParser.ProjectResolver(fsproj) 
+let projectOptions = checker.GetProjectOptionsFromProjectFile(fsproj) 
 
-v.Options
+// OR: let projectOptions = checker.GetProjectOptionsFromScript("script.fsx", System.IO.File.ReadAllText("script.fsx")
 
 
 //---------------------------------------------------------------------------
 // Task 2. Parse and check an entire project
 
 
-
-// Helper to get the project options in a form that the InteractiveChecker expects
-let getProjectOptions projFile = 
-
-    let opts = ProjectParser.ProjectResolver(projFile).Options
-    checker.GetProjectOptionsFromCommandLineArgs(projFile, opts)
-
-
- 
-let projectOptions = getProjectOptions fsproj
-
-// OR: let projectOptions = checker.GetProjectOptionsFromScript("script.fsx", System.IO.File.ReadAllText("script.fsx")
-
 let wholeProjectResults = 
-    __USE_THE_CHECKER_TO_PARSE_AND_CHECK_USING_THE_GIVEN_PROJECT_OPTIONS__
-    __DONT_FORGET_TO_RUN_THE_CALL_SYNCHRONOUSLY__
+    checker.ParseAndCheckProject(projectOptions) 
+    |> Async.RunSynchronously
 
-
+wholeProjectResults.Errors // check this is empty!
 
 //---------------------------------------------------------------------------
 // Task 3. Analyze all uses of all the symbols used in the project to collect some project statistics
 
-// Helper to count
 module Seq = 
     let frequencyBy f s = 
         s 
@@ -63,27 +50,27 @@ module Seq =
 
 
 let allUsesOfAllSymbols = 
-    wholeProjectResults.__GET_ALL_USES_OF_ALL_SYMBOLS_FROM_THE_INTERACTIVE_CHECKER_RESULTS_FOR_THE_PROJECT__
-    __DONT_FORGET_TO_RUN_THE_CALL_SYNCHRONOUSLY__
+    wholeProjectResults.GetAllUsesOfAllSymbols()
+    |> Async.RunSynchronously
 
 
 // Task 3a. Frequency by display name
 
-allUsesOfAllSymbols |> Seq.frequencyBy (fun su -> __GET_THE_DISPLAY_NAME_OF_THE_SYMBOL_ASSOCIATED_WITH_THE_SYMBOL_USE__) 
+allUsesOfAllSymbols |> Seq.frequencyBy (fun su -> su.Symbol.DisplayName) 
 
 // Task 3b. Frequency by kind
 
-allUsesOfAllSymbols |> Seq.frequencyBy (fun su -> __CHECK_IF_THE_SYMBOL_ASSOCIATED_WITH_THE_SYMBOL_USE_IS_FSharpMemberFunctionOrValue) 
+allUsesOfAllSymbols |> Seq.frequencyBy (fun su -> su.Symbol :? FSharpMemberOrFunctionOrValue) 
 
 // Task 3c. Frequency by kind
 
-allUsesOfAllSymbols |> Seq.frequencyBy (fun su -> __USE_su.Symbol.GetType().Name__TO_CATEGORIZE_THE_SYMBOL__) 
+allUsesOfAllSymbols |> Seq.frequencyBy (fun su -> su.Symbol.GetType().Name) 
 
 // Task 3d. Frequency by kind
 
 allUsesOfAllSymbols |> Seq.frequencyBy (fun su -> 
        match su.Symbol with 
-       | :? FSharpMemberFunctionOrValue as mv -> 
+       | :? FSharpMemberOrFunctionOrValue as mv -> 
            if mv.IsProperty || mv.IsPropertyGetterMethod || mv.IsPropertySetterMethod then 
               "prop"
            elif mv.IsMember then 
@@ -101,7 +88,10 @@ allUsesOfAllSymbols |> Seq.frequencyBy (fun su ->
        | :? FSharpField as uc -> 
               "field"
        | :? FSharpEntity as e -> 
-              __ADD_CASES_TO_CHECK_IF_THE_ENTITY_IS_A_MODULE_OR_CLASS_OR_INTERFACE_OR_NAMESPACE__
+              if e.IsFSharpModule then  "module"
+              elif  e.IsClass || e.IsInterface || e.IsValueType || e.IsDelegate then  "objtype"
+              elif  e.IsNamespace then  "namespace"
+              else "entity"
 
        | _ -> "other") 
 
@@ -111,7 +101,10 @@ allUsesOfAllSymbols |> Seq.frequencyBy (fun su ->
 
 allUsesOfAllSymbols 
     |> Seq.filter (fun su -> 
-         __FIND_ALL_FSharpMemberFunctionOrValue_SYMBOLS_WITH_DISPLAY_NAME_LENGTH_LESS_THAN_THREE_AND_PASSING_IsModuleValueOrMember__)
+         su.Symbol.DisplayName.Length <= 2 && 
+         match su.Symbol with 
+         | :? FSharpMemberOrFunctionOrValue as v -> v.IsModuleValueOrMember
+         | _ -> false )
     |> Seq.frequencyBy (fun su -> su.Symbol.DisplayName)
 
 
@@ -124,7 +117,6 @@ open System
 open System.IO
 open System.Text
 
-// A helper class to wrap an F# Interactive Session
 type Evaluator() = 
     // Intialize output and input streams
     let sbOut = new StringBuilder()
@@ -156,29 +148,26 @@ pow
 // EvalExpression returns an 'obj'. Convert the object to the expected type
 let pow0 = pow0obj |> unbox<int -> double -> double>
 
-__TEST_POW0___
+pow0 10 2.0
 
 let pow1obj =
     evaluator.EvalExpression
         """
-let rec pow n x = 
-    let mutable v = 1.0 
-__DO_AN_IMPLEMENTATION_OF_POW_USING_A_MUTABLE__
-
-pow
-"""
+ let rec pow n x = 
+     let mutable v = 1.0 
+     for i in 1 .. n do 
+         v <- v * x 
+     v
+ pow
+ """
 
 let pow1 = pow1obj |> unbox<int -> double -> double>
-
-__TEST_POW1___
 
 
 let pow2 n =
     evaluator.EvalExpression
        ("""
- __DO_AN_IMPLEMENTATION_OF_POW_USING_GENERATED_CODE__
- let rec pow (x:double) = 
-      __MAKE_THIS_BE x * .... * x 
+ let rec pow (x:double) = """ + String.concat " * " (List.replicate n "x") + """
  pow
  
  """)
@@ -186,27 +175,25 @@ let pow2 n =
      |> unbox<double -> double>
 
 
-__TEST_POW2___
+pow2 10 10.0
 
 #time "on"
 
-
-// Generate a specialized 'pow2' for size 10 and 100
 let pow2_10 = pow2 10 
+let pow2_100 = pow2 100 
 
-__GENERATE_SPECIALIZED_POW2_FOR_SIZE_100_AND_CALL_IT_'pow2_100'__
-
-// A benchmarking function that uses 'f' many times
 let powt f = 
     let mutable res = 0.0
     for i in 0 .. 10000000 do 
         res <- f 10.0 
     res
 
-__BENCHMARK_POW0_POW1_POW2_USING_POWT___
-
-//powt (pow1 100)
-//powt pow2_100
+powt (pow0 10)
+powt (pow1 10)
+powt pow2_10
+powt (pow0 100)
+powt (pow1 100)
+powt pow2_100
 
 
 //---------------------------------------------------------------------------
@@ -221,18 +208,12 @@ open System.Text
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 
 type MyFileSystem() = 
-    /// The default file system
     let dflt = Shim.FileSystem
     
-    /// The store of files in the virtualized file system
-    let files = Dictionary<string,(DateTime * string)>()
-
-    /// Sets the file text in the file system
-    member __.SetFile(file, text:string) = 
-         files.[file] <- (DateTime.Now, text)
+    let files = Dictionary<_,_>()
+    member __.SetFile(file, text:string) = files.[file] <- (DateTime.Now, text)
 
     interface IFileSystem with
-        // Implement the service to open files for reading and writing
         member __.FileStreamReadShim(fileName) = 
             if files.ContainsKey(fileName) then
                 let (fileWriteTime, fileText) = files.[fileName]
@@ -241,9 +222,11 @@ type MyFileSystem() =
                 dflt.FileStreamReadShim(fileName)
 
         member __.ReadAllBytesShim(fileName) = 
-            __IMPLEMENT_THIS_PART_OF_THE_FILE_SYSTEM_API_USING_'Encoding.UTF8.GetBytes(fileText)'__
-            __CHECK_'files.ContainsKey'__FIRST__LIKE_THE_OTHER_CASES__
-            __USE_'dftl.ReadAllBytesShim(fileName)'_LIKE_THE_OTHER_CASES__
+            if files.ContainsKey(fileName) then
+                let (fileWriteTime, fileText) = files.[fileName]
+                Encoding.UTF8.GetBytes(fileText)
+            else 
+                dflt.ReadAllBytesShim(fileName)
 
         member __.GetLastWriteTimeShim(fileName) = 
             if files.ContainsKey(fileName) then
@@ -281,18 +264,16 @@ FileSystem.ReadAllBytesShim fileName2
 //---------------------------------------------------------------------------
 // Task 6b. Check with respect to the file system
 
-// Create a new set of project options with a different set of file names
 let projectOptions2 = 
     { projectOptions with 
-        ProjectOptions = [| yield! projectOptions.ProjectOptions |> Array.filter(fun s -> not (s.EndsWith ".fs"))
-                            yield fileName1
-                            yield fileName2 |] }
+        OtherOptions = [| yield! projectOptions.OtherOptions |> Array.filter(fun s -> not (s.EndsWith ".fs"))
+                          yield fileName1;
+                          yield fileName2 |] }
 
 let wholeProjectResults2 = 
     checker.ParseAndCheckProject(projectOptions2) 
     |> Async.RunSynchronously
 
-// Check if the project results contains errors
 wholeProjectResults2.Errors
 
 //---------------------------------------------------------------------------
@@ -300,12 +281,11 @@ wholeProjectResults2.Errors
 
 open System.Windows.Forms
 
-// Create two editor windows
 for fileName in [fileName1; fileName2] do 
-  let textBox1 = new TextBox(Dock=DockStyle.Fill, Multiline=true)
-  let f1 = new Form(Visible=true, Text=fileNam l
-  f1.Controls.Add(textBox1)
-  textBox1.TextChanged.Add(fun _ -> printfn "setting..."; myFileSystem.SetFile(fileName, textBox1.Text))
+  let tb1 = new TextBox(Dock=DockStyle.Fill, Multiline=true)
+  let f1 = new Form(Visible=true, Text=fileName)
+  f1.Controls.Add(tb1)
+  tb1.TextChanged.Add(fun _ -> printfn "setting..."; myFileSystem.SetFile(fileName, tb1.Text))
 
 
 async { for i in 0 .. 100 do 
@@ -313,11 +293,7 @@ async { for i in 0 .. 100 do
             do! Async.Sleep 1000
             printfn "checking..."
             let! wholeProjectResults = checker.ParseAndCheckProject(projectOptions2) 
-
             printfn "checked..."
-
-            __ADD_AN_ANALYSIS_WHICH_REPORTS_THE_USE_OF_MUTABLE_VALUES_IN_THE_PROJECT_AND_PRINTS_THE_RESULTS__
-
             for e in wholeProjectResults.Errors do 
                printfn "error: %s" e.Message 
           with e -> 

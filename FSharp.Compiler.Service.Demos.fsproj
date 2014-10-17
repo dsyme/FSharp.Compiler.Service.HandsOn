@@ -48,16 +48,16 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
-    <None Include="compiler.fsx" />
-    <None Include="editor.fsx" />
-    <None Include="tutorial.fsx" />
-    <None Include="tokenizer.fsx" />
-    <None Include="untypedtree.fsx" />
+    <None Include="dojo.fsx" />
+    <None Include="bonus editor.fsx" />
+    <None Include="bonus tokenizer.fsx" />
+    <None Include="bonus compiler.fsx" />
+    <None Include="bonus untypedtree.fsx" />
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Compiler.Service">
-      <HintPath>packages\FSharp.Compiler.Service.0.0.65\lib\net45\FSharp.Compiler.Service.dll</HintPath>
+      <HintPath>packages\FSharp.Compiler.Service.0.0.70\lib\net45\FSharp.Compiler.Service.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />

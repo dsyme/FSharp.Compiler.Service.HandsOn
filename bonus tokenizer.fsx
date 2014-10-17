@@ -1,7 +1,4 @@
-(*** hide ***)
-#I "packages/FSharp.Compiler.Service.0.0.62/lib/net45/"
-#load "packages/FsLab.0.0.19/FsLab.fsx"
-//#load "packages/FSharp.Charting.Gtk.0.90.7/FSharp.Charting.Gtk.fsx"
+
 (**
 Compiler Services: Using the F# tokenizer
 =========================================
@@ -21,7 +18,9 @@ Creating the tokenizer
 To use the tokenizer, reference `FSharp.Compiler.Service.dll` and open the
 `SourceCodeServices` namespace:
 *)
+#I "packages/FSharp.Compiler.Service.0.0.70/lib/net45/"
 #r "FSharp.Compiler.Service.dll"
+
 open Microsoft.FSharp.Compiler.SourceCodeServices
 (**
 Now you can create an instance of `SourceTokenizer`. The class takes two 
@@ -30,7 +29,7 @@ file name of the source code. The defined symbols are required because the
 tokenizer handles `#if` directives. The file name is required only to specify
 locations of the source code (and it does not have to exist):
 *)
-let sourceTok = SourceTokenizer([], "C:\\test.fsx")
+let sourceTok = FSharpSourceTokenizer([], "C:\\test.fsx")
 (**
 Using the `sourceTok` object, we can now (repeatedly) tokenize lines of 
 F# source code.
@@ -55,7 +54,7 @@ until it returns `None` (indicating the end of line). When the function suceeds,
 returns `TokenInformation` object with all the interesting details:
 *)
 /// Tokenize a single line of F# code
-let rec tokenizeLine (tokenizer:LineTokenizer) state =
+let rec tokenizeLine (tokenizer:FSharpLineTokenizer) state =
   match tokenizer.ScanToken(state) with
   | Some tok, state ->
       // Print token name

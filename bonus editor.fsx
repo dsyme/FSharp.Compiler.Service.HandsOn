@@ -1,7 +1,3 @@
-(*** hide ***)
-#I "packages/FSharp.Compiler.Service.0.0.62/lib/net45/"
-#load "packages/FsLab.0.0.19/FsLab.fsx"
-//#load "packages/FSharp.Charting.Gtk.0.90.7/FSharp.Charting.Gtk.fsx"
 
 (**
 Compiler Services: Editor services
@@ -26,13 +22,14 @@ of `InteractiveChecker`:
 
 *)
 // Reference F# compiler API
+#I "packages/FSharp.Compiler.Service.0.0.70/lib/net45/"
 #r "FSharp.Compiler.Service.dll"
 
 open System
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
 // Create an interactive checker instance 
-let checker = InteractiveChecker.Create()
+let checker = FSharpChecker.Create()
 
 (**
 

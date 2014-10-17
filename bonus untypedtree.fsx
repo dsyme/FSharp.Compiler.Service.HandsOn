@@ -1,7 +1,4 @@
-(*** hide ***)
-#I "packages/FSharp.Compiler.Service.0.0.62/lib/net45/"
-#load "packages/FsLab.0.0.19/FsLab.fsx"
-//#load "packages/FSharp.Charting.Gtk.0.90.7/FSharp.Charting.Gtk.fsx"
+#I "packages/FSharp.Compiler.Service.0.0.70/lib/net45/"
 
 (**
 Compiler Services: Processing untyped syntax tree
@@ -45,7 +42,7 @@ can be used to notify the checker about file changes (which we ignore).
 
 *)
 // Create an interactive checker instance 
-let checker = InteractiveChecker.Create()
+let checker = FSharpChecker.Create()
 (**
 
 To get the AST, we define a function that takes file name and the source code
