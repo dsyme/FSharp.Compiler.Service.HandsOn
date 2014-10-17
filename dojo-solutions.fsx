@@ -11,6 +11,7 @@ This tutorial demonstrates symbols, projects, interactive compilation/execution 
 //---------------------------------------------------------------------------
 // Task 1. Crack an F# project file and get its options
 
+// On Mono/OSX/Linux, this requires F# tag 3.1.1.27 or greater. The tag for Mono 3.10.0 was 3.1.1.25. 
 
 #I "packages/FSharp.Compiler.Service.0.0.70/lib/net45/"
 #r "FSharp.Compiler.Service.dll"
