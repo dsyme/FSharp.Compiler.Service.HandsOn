@@ -22,7 +22,8 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 
 let checker = FSharpChecker.Create()
 
-let fsproj = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
+let exampleProject = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
+let exampleScript = __SOURCE_DIRECTORY__ + "/example/Script.fsx"
 
 // If using Windows, or Mono/OSX/Linux with F# tag 3.1.1.27 or greater, you have the option
 // of analyzing entire projects:
@@ -31,8 +32,8 @@ let fsproj = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
 // USE THIS ON MONO 3.10.0 and before
 
 let projectOptions = 
-    let scriptText = System.IO.File.ReadAllText(__SOURCE_DIRECTORY__ + "/example/Script.fsx")
-    checker.GetProjectOptionsFromScript(__SOURCE_DIRECTORY__ + "/example/Script.fsx", scriptText)
+    let scriptText = System.IO.File.ReadAllText(exampleScript)
+    checker.GetProjectOptionsFromScript(exampleScript, scriptText)
     |> Async.RunSynchronously
 
 
@@ -289,8 +290,8 @@ wholeProjectResults2.Errors
 // Task 7. Create an IDE
 
 
-//#load "load-eto-winforms.fsx"  // <------ USE THIS ON WINDOWS
-#load "load-eto-gtk.fsx"         // <------ USE THIS ON MAC
+#load "load-eto-winforms.fsx"  // <------ USE THIS ON WINDOWS
+//#load "load-eto-gtk.fsx"         // <------ USE THIS ON MAC
 
 open System
 open Eto.Forms
