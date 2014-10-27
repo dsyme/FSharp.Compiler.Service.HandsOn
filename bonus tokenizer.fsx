@@ -18,7 +18,7 @@ Creating the tokenizer
 To use the tokenizer, reference `FSharp.Compiler.Service.dll` and open the
 `SourceCodeServices` namespace:
 *)
-#I "packages/FSharp.Compiler.Service.0.0.70/lib/net45/"
+#I "packages/FSharp.Compiler.Service.0.0.73/lib/net45/"
 #r "FSharp.Compiler.Service.dll"
 
 open Microsoft.FSharp.Compiler.SourceCodeServices

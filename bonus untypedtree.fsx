@@ -1,4 +1,4 @@
-#I "packages/FSharp.Compiler.Service.0.0.70/lib/net45/"
+#I "packages/FSharp.Compiler.Service.0.0.73/lib/net45/"
 
 (**
 Compiler Services: Processing untyped syntax tree

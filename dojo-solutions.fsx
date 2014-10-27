@@ -13,7 +13,7 @@ This tutorial demonstrates symbols, projects, interactive compilation/execution 
 
 // On Mono/OSX/Linux, this requires F# tag 3.1.1.27 or greater. The tag for Mono 3.10.0 was 3.1.1.25. 
 
-#I "packages/FSharp.Compiler.Service.0.0.70/lib/net45/"
+#I "packages/FSharp.Compiler.Service.0.0.73/lib/net45/"
 #r "FSharp.Compiler.Service.dll"
 
 open System
@@ -162,6 +162,7 @@ let pow1obj =
  pow
  """
 
+// EvalExpression returns an 'obj'. Convert the object to the expected type
 let pow1 = pow1obj |> unbox<int -> double -> double>
 
 
@@ -176,11 +177,12 @@ let pow2 n =
      |> unbox<double -> double>
 
 
-pow2 10 10.0
+let pow2_10 = pow2 10 
+
+pow2_10 10.0
 
 #time "on"
 
-let pow2_10 = pow2 10 
 let pow2_100 = pow2 100 
 
 let powt f = 
@@ -280,15 +282,79 @@ wholeProjectResults2.Errors
 //---------------------------------------------------------------------------
 // Task 7. Create an IDE
 
-#if MONO // this bit is unlikely to work on Mono because of missing System.Windows.Forms support
-#else
-open System.Windows.Forms
 
-for fileName in [fileName1; fileName2] do 
-  let tb1 = new TextBox(Dock=DockStyle.Fill, Multiline=true)
-  let f1 = new Form(Visible=true, Text=fileName)
-  f1.Controls.Add(tb1)
-  tb1.TextChanged.Add(fun _ -> printfn "setting..."; myFileSystem.SetFile(fileName, tb1.Text))
+
+#r @"packages\Eto.Forms.1.3.0\lib\net40\Eto.dll"
+
+#if MONO
+#r @"packages\Eto.Platform.Gtk.1.3.0\lib\net40\Eto.Platform.Gtk.dll"
+#else
+#r @"packages\Eto.Platform.Windows.1.3.0\lib\net40\Eto.Platform.Windows.dll"
+#endif
+
+
+open System
+open Eto.Forms
+open Eto.Drawing
+
+let app = new Application()
+
+
+
+for (fileName,fileText) in [(fileName1, "module FileOne\n\nlet x = 1"); (fileName2, "module FileTwo\n\nlet x = 1")] do 
+    let form = new Form(Title = fileName, ClientSize = new Size(400, 350))
+
+    let tb1 = new TextArea( (* Dock=DockStyle.Fill, Multiline=true *))
+    tb1.TextChanged.Add(fun _ -> printfn "setting..."; myFileSystem.SetFile(fileName, tb1.Text))
+    tb1.Text <- fileText
+    //Eto.Forms.Text
+    form.Content <- new Scrollable(Content = tb1)
+
+    form.Show()
+    
+(*
+    // DynamicLayout is the typical layout to use but you can also use TableLayout or PixelLayout
+    let layout = new DynamicLayout()
+
+    layout.BeginHorizontal() |> ignore
+
+    layout.Add(null) |> ignore
+    layout.Add(new Label(Text = "Hello World!")) |> ignore
+    layout.Add(null) |> ignore
+
+    layout.EndHorizontal()
+
+    // scrollable gives you a scrolling region
+    form.Content <- new Scrollable(Content = layout)
+
+    // your commands!
+    let clickMe = new Command(MenuText = "Click Me!", ShowLabel = true, ToolBarText = "Click Me!")
+    clickMe.Executed.Add (fun e -> MessageBox.Show(form, "I was clicked!") |> ignore)
+
+    let quitAction = new Command(MenuText = "Quit", Shortcut = (Application.Instance.CommonModifier ||| Keys.Q)) 
+    quitAction.Executed.Add(fun e -> Application.Instance.Quit())
+
+    // create menu & get standard menu items (e.g. needed for OS X)
+    let menu = new MenuBar()
+    Application.Instance.CreateStandardMenu(menu.Items)
+            
+    // add commands to the menu
+    let myMenu = menu.Items.GetSubmenu("&File")
+    myMenu.Items.Add(clickMe, 500)
+    myMenu.Items.AddSeparator(500)
+    myMenu.Items.Add(quitAction, 1000)
+            
+    menu.Items.Trim()
+    form.Menu <- menu
+
+    // create toolbar			
+    let toolbar = new ToolBar()
+    toolbar.Items.Add(clickMe)
+    form.ToolBar <- toolbar
+
+
+*)
+
 
 
 async { for i in 0 .. 100 do 
@@ -297,12 +363,13 @@ async { for i in 0 .. 100 do
             printfn "checking..."
             let! wholeProjectResults = checker.ParseAndCheckProject(projectOptions2) 
             printfn "checked..."
+            if wholeProjectResults.Errors.Length = 0 then 
+               printfn "all ok!" 
             for e in wholeProjectResults.Errors do 
-               printfn "error: %s" e.Message 
+               printfn "error/warning: %s(%d%d): %s" e.FileName e.StartLineAlternate e.StartColumn e.Message 
           with e -> 
               printfn "whoiops...: %A" e.Message }
    |> Async.StartImmediate
 
 // Async.CancelDefaultToken()
 
-#endif

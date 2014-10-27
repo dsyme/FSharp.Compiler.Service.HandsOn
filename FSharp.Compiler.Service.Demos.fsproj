@@ -56,8 +56,28 @@
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Eto">
+      <HintPath>packages\Eto.Forms.1.3.0\lib\net40\Eto.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Eto.Platform.Gtk">
+      <HintPath>packages\Eto.Platform.Gtk.1.3.0\lib\net40\Eto.Platform.Gtk.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Eto.Platform.Mac">
+      <HintPath>packages\Eto.Platform.Mac.1.3.0\lib\net40\Eto.Platform.Mac.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Eto.Platform.Windows">
+      <HintPath>packages\Eto.Platform.Windows.1.3.0\lib\net40\Eto.Platform.Windows.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FSharp.Compiler.Service">
-      <HintPath>packages\FSharp.Compiler.Service.0.0.70\lib\net45\FSharp.Compiler.Service.dll</HintPath>
+      <HintPath>packages\FSharp.Compiler.Service.0.0.73\lib\net45\FSharp.Compiler.Service.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="MonoMac">
+      <HintPath>packages\Eto.Platform.Mac.1.3.0\lib\net40\MonoMac.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
