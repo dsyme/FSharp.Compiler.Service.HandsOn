@@ -9,9 +9,7 @@ This tutorial demonstrates symbols, projects, interactive compilation/execution 
 *)
 
 //---------------------------------------------------------------------------
-// Task 1. Crack an F# project file and get its options
-
-// On Mono/OSX/Linux, this requires F# tag 3.1.1.27 or greater. The tag for Mono 3.10.0 was 3.1.1.25. 
+// Task 0. Create a checker
 
 
 #I "packages/FSharp.Compiler.Service.0.0.73/lib/net45/"
@@ -23,14 +21,25 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 
 let checker = __CREATE_AN_FSHARP_CHECKER__ 
 
-let fsproj = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
+//---------------------------------------------------------------------------
+// Task 1. Crack an F# project file and get its options
 
-let projectOptions = checker.GetProjectOptionsFromProjectFile(fsproj)
 
-// Use this if you want to anaylze as a script as if it were a project:
-//    let projectOptions = checker.GetProjectOptionsFromScript("script.fsx", System.IO.File.ReadAllText("script.fsx")
+let exampleProject = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
+let exampleScript = __SOURCE_DIRECTORY__ + "/example/Script.fsx"
 
-projectOptions.OtherOptions
+// If using Windows, or Mono/OSX/Linux with F# tag 3.1.1.27 or greater, you have the option
+// of analyzing entire projects:
+//let projectOptions = checker.GetProjectOptionsFromProjectFile(exampleProject) 
+
+// USE THIS ON MONO 3.10.0 and before
+
+let projectOptions = 
+    let scriptText = System.IO.File.ReadAllText(exampleScript)
+    checker.GetProjectOptionsFromScript(exampleScript, scriptText)
+    |> Async.RunSynchronously
+
+__LOOK_AROUND_ON_PROJECT_OPTIONS_AND_CHECK_THEY_LOOK_OK__
 
 
 //---------------------------------------------------------------------------
@@ -294,32 +303,55 @@ wholeProjectResults2.Errors
 //---------------------------------------------------------------------------
 // Task 7. Create an IDE
 
-open System.Windows.Forms
 
-// Create two editor windows
-for fileName in [fileName1; fileName2] do 
-  let textBox1 = new TextBox(Dock=DockStyle.Fill, Multiline=true)
-  let f1 = new Form(Visible=true, Text=fileName)
-  f1.Controls.Add(textBox1)
-  textBox1.TextChanged.Add(fun _ -> printfn "setting..."; myFileSystem.SetFile(fileName, textBox1.Text))
+//#load "load-eto-winforms.fsx"  // <------ USE THIS ON WINDOWS
+#load "load-eto-gtk.fsx"         // <------ USE THIS ON MAC
+
+open System
+open Eto.Forms
+open Eto.Drawing
+
+
+let createEditor(fileName, fileText) =
+
+    let form = new Form(Title = fileName, ClientSize = new Size(400, 350))
+
+    let textArea = new TextArea( (* Dock=DockStyle.Fill, Multiline=true *))
+    //tb1.TextChanged.Add(fun _ -> (* printfn "setting..."; myFileSystem.SetFile(fileName, tb1.Text) *)()  )
+    textArea.Text <- fileText
+    form.Content <- new Scrollable(Content = textArea)
+
+    form.Show()
+    textArea
+
+let textArea1 = createEditor(fileName1, "module FileOne\n\nlet x = 1")
+let textArea2 = createEditor(fileName2, "module FileTwo\n\nlet x = 1") 
 
 
 async { for i in 0 .. 100 do 
           try 
             do! Async.Sleep 1000
-            printfn "checking..."
-            let! wholeProjectResults = checker.ParseAndCheckProject(projectOptions2) 
+            do myFileSystem.SetFile(fileName1, textArea1.Text) 
+            do myFileSystem.SetFile(fileName2, textArea2.Text) 
 
+            printfn "checking..."
+
+            let! wholeProjectResults = __PARSE_AND_CHECK_THE_WHOLE_PROJECT_HERE__ // checker.ParseAndCheckProject(projectOptions2) 
             printfn "checked..."
 
             __ADD_AN_ANALYSIS_WHICH_REPORTS_THE_USE_OF_MUTABLE_VALUES_IN_THE_PROJECT_AND_PRINTS_THE_RESULTS__
 
+            if wholeProjectResults.Errors.Length = 0 then 
+               printfn "all ok!" 
+
             for e in wholeProjectResults.Errors do 
-               printfn "error: %s" e.Message 
+               printfn "error/warning: %s(%d%d): %s" e.FileName e.StartLineAlternate e.StartColumn e.Message 
+
           with e -> 
               printfn "whoiops...: %A" e.Message }
    |> Async.StartImmediate
 
-// Use this to stop, or reset the session :)
+
+// Use this to stop, or else just reset the session :)
 // Async.CancelDefaultToken()
 

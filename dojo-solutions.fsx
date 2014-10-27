@@ -9,9 +9,8 @@ This tutorial demonstrates symbols, projects, interactive compilation/execution 
 *)
 
 //---------------------------------------------------------------------------
-// Task 1. Crack an F# project file and get its options
+// Task 1. Crack an F# script or project file and get its options
 
-// On Mono/OSX/Linux, this requires F# tag 3.1.1.27 or greater. The tag for Mono 3.10.0 was 3.1.1.25. 
 
 #I "packages/FSharp.Compiler.Service.0.0.73/lib/net45/"
 #r "FSharp.Compiler.Service.dll"
@@ -25,9 +24,16 @@ let checker = FSharpChecker.Create()
 
 let fsproj = __SOURCE_DIRECTORY__ + @"/example/example.fsproj"
 
-let projectOptions = checker.GetProjectOptionsFromProjectFile(fsproj) 
+// If using Windows, or Mono/OSX/Linux with F# tag 3.1.1.27 or greater, you have the option
+// of analyzing entire projects:
+//let projectOptions = checker.GetProjectOptionsFromProjectFile(fsproj) 
 
-// OR: let projectOptions = checker.GetProjectOptionsFromScript("script.fsx", System.IO.File.ReadAllText("script.fsx")
+// USE THIS ON MONO 3.10.0 and before
+
+let projectOptions = 
+    let scriptText = System.IO.File.ReadAllText(__SOURCE_DIRECTORY__ + "/example/Script.fsx")
+    checker.GetProjectOptionsFromScript(__SOURCE_DIRECTORY__ + "/example/Script.fsx", scriptText)
+    |> Async.RunSynchronously
 
 
 //---------------------------------------------------------------------------
@@ -283,83 +289,35 @@ wholeProjectResults2.Errors
 // Task 7. Create an IDE
 
 
-
-#r @"packages\Eto.Forms.1.3.0\lib\net40\Eto.dll"
-
-#if MONO
-#r @"packages\Eto.Platform.Gtk.1.3.0\lib\net40\Eto.Platform.Gtk.dll"
-#else
-#r @"packages\Eto.Platform.Windows.1.3.0\lib\net40\Eto.Platform.Windows.dll"
-#endif
-
+//#load "load-eto-winforms.fsx"  // <------ USE THIS ON WINDOWS
+#load "load-eto-gtk.fsx"         // <------ USE THIS ON MAC
 
 open System
 open Eto.Forms
 open Eto.Drawing
 
-let app = new Application()
 
+let createEditor(fileName, fileText) =
 
-
-for (fileName,fileText) in [(fileName1, "module FileOne\n\nlet x = 1"); (fileName2, "module FileTwo\n\nlet x = 1")] do 
     let form = new Form(Title = fileName, ClientSize = new Size(400, 350))
 
-    let tb1 = new TextArea( (* Dock=DockStyle.Fill, Multiline=true *))
-    tb1.TextChanged.Add(fun _ -> printfn "setting..."; myFileSystem.SetFile(fileName, tb1.Text))
-    tb1.Text <- fileText
-    //Eto.Forms.Text
-    form.Content <- new Scrollable(Content = tb1)
+    let textArea = new TextArea( (* Dock=DockStyle.Fill, Multiline=true *))
+    //tb1.TextChanged.Add(fun _ -> (* printfn "setting..."; myFileSystem.SetFile(fileName, tb1.Text) *)()  )
+    textArea.Text <- fileText
+    form.Content <- new Scrollable(Content = textArea)
 
     form.Show()
-    
-(*
-    // DynamicLayout is the typical layout to use but you can also use TableLayout or PixelLayout
-    let layout = new DynamicLayout()
+    textArea
 
-    layout.BeginHorizontal() |> ignore
-
-    layout.Add(null) |> ignore
-    layout.Add(new Label(Text = "Hello World!")) |> ignore
-    layout.Add(null) |> ignore
-
-    layout.EndHorizontal()
-
-    // scrollable gives you a scrolling region
-    form.Content <- new Scrollable(Content = layout)
-
-    // your commands!
-    let clickMe = new Command(MenuText = "Click Me!", ShowLabel = true, ToolBarText = "Click Me!")
-    clickMe.Executed.Add (fun e -> MessageBox.Show(form, "I was clicked!") |> ignore)
-
-    let quitAction = new Command(MenuText = "Quit", Shortcut = (Application.Instance.CommonModifier ||| Keys.Q)) 
-    quitAction.Executed.Add(fun e -> Application.Instance.Quit())
-
-    // create menu & get standard menu items (e.g. needed for OS X)
-    let menu = new MenuBar()
-    Application.Instance.CreateStandardMenu(menu.Items)
-            
-    // add commands to the menu
-    let myMenu = menu.Items.GetSubmenu("&File")
-    myMenu.Items.Add(clickMe, 500)
-    myMenu.Items.AddSeparator(500)
-    myMenu.Items.Add(quitAction, 1000)
-            
-    menu.Items.Trim()
-    form.Menu <- menu
-
-    // create toolbar			
-    let toolbar = new ToolBar()
-    toolbar.Items.Add(clickMe)
-    form.ToolBar <- toolbar
-
-
-*)
-
+let textArea1 = createEditor(fileName1, "module FileOne\n\nlet x = 1")
+let textArea2 = createEditor(fileName2, "module FileTwo\n\nlet x = 1") 
 
 
 async { for i in 0 .. 100 do 
           try 
             do! Async.Sleep 1000
+            do myFileSystem.SetFile(fileName1, textArea1.Text) 
+            do myFileSystem.SetFile(fileName2, textArea2.Text) 
             printfn "checking..."
             let! wholeProjectResults = checker.ParseAndCheckProject(projectOptions2) 
             printfn "checked..."
