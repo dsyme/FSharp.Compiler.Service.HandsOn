@@ -32,7 +32,6 @@ let exampleScript = __SOURCE_DIRECTORY__ + "/example/Script.fsx"
 // of analyzing entire projects:
 //let projectOptions = checker.GetProjectOptionsFromProjectFile(exampleProject) 
 
-// USE THIS ON MONO 3.10.0 and before
 
 let projectOptions = 
     let scriptText = System.IO.File.ReadAllText(exampleScript)
@@ -44,11 +43,6 @@ __LOOK_AROUND_ON_PROJECT_OPTIONS_AND_CHECK_THEY_LOOK_OK__
 
 //---------------------------------------------------------------------------
 // Task 2. Parse and check an entire project
-
-
-
-
-// OR: let projectOptions = checker.GetProjectOptionsFromScript("script.fsx", System.IO.File.ReadAllText("script.fsx")
 
 let wholeProjectResults = 
     __USE_THE_CHECKER_TO_PARSE_AND_CHECK_USING_THE_GIVEN_PROJECT_OPTIONS__
@@ -304,8 +298,8 @@ wholeProjectResults2.Errors
 // Task 7. Create an IDE
 
 
-//#load "load-eto-winforms.fsx"  // <------ USE THIS ON WINDOWS
-#load "load-eto-gtk.fsx"         // <------ USE THIS ON MAC
+#load "load-eto-winforms.fsx"  // <------ USE THIS ON WINDOWS
+//#load "load-eto-gtk.fsx"         // <------ USE THIS ON MAC
 
 open System
 open Eto.Forms
